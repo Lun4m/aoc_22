@@ -2,19 +2,19 @@ program elf_calories
   use iso_fortran_env
   implicit none
 
-  integer :: i, check_zero, stat, line_value, total_calories, elf_number
+  integer :: i, stat, line_value, total_calories, elf_number
   integer, dimension(3) :: most_calories = 0, fattest_elves = 0
-  character(len=100) :: line
+  character(len=10) :: line
 
   elf_number = 0
   most_calories = 0
   total_calories = 0
 
   open(0, file="../input.txt")
-  do while(stat == 0)
+  do
     read(0, "( a )", iostat=stat, blank="ZERO") line
+    if (stat /= 0) exit
     if (line == "") then
-      if (total_calories > 65000) print *, total_calories
       if (total_calories > most_calories(3)) then 
         if (total_calories > most_calories(2)) then
           if (total_calories > most_calories(1)) then
