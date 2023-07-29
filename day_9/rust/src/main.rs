@@ -11,13 +11,48 @@ struct Point {
     y: i32,
 }
 
+#[derive(Debug)]
+struct Rope {
+    n_knots: usize,
+    knots: Vec<Point>,
+}
+
+impl Rope {
+    fn new(n_knots: usize) -> Self {
+        Rope {
+            n_knots,
+            knots: vec![Point::new(0, 0); n_knots],
+        }
+    }
+
+    fn update_knots(&mut self, visited: &mut HashSet<Point>, mut n_steps: i32, step: Point) {
+        while n_steps > 0 {
+            n_steps -= 1;
+            self.knots[0].add(step);
+            for i in 1..self.n_knots {
+                let d = distance(&self.knots[i - 1], &self.knots[i]);
+
+                if d.x.abs() >= 2 || d.y.abs() >= 2 {
+                    self.knots[i].add(d.normalize());
+                    if i == self.n_knots - 1 {
+                        visited.insert(self.knots[i]);
+                    }
+                } else {
+                    // skip the other knots if the distance is short
+                    break;
+                }
+            }
+        }
+    }
+}
+
 impl Point {
-    fn add(&mut self, other: &Point) {
+    fn add(&mut self, other: Point) {
         self.x += other.x;
         self.y += other.y;
     }
 
-    fn norm(&self) -> Point {
+    fn normalize(&self) -> Point {
         let (mut x, mut y) = (0, 0);
         if self.x != 0 {
             x = self.x / self.x.abs();
@@ -40,81 +75,38 @@ fn distance(head: &Point, tail: &Point) -> Point {
     }
 }
 
-fn update_tail(
-    head: &mut Point,
-    tail: &mut Point,
-    visited: &mut HashSet<Point>,
-    mut n_steps: i32,
-    step: &Point,
-) {
-    while n_steps > 0 {
-        head.add(step);
-        // print!("{:?}\t", head);
-        let d = distance(head, tail);
-        if d.x.abs() >= 2 {
-            if d.y == 0 {
-                tail.add(step);
-                visited.insert(*tail);
-            } else {
-                tail.add(&d.norm());
-                visited.insert(*tail);
-            }
-        } else if d.y.abs() >= 2 {
-            if d.x == 0 {
-                tail.add(step);
-                visited.insert(*tail);
-            } else {
-                tail.add(&d.norm());
-                visited.insert(*tail);
-            }
-        }
-        // println!("{:?}", tail);
-        n_steps -= 1;
-    }
-}
-
 fn main() {
-    let fname = env::args()
-        .nth(1)
-        .expect("Provide 'input.txt' as first argument.");
+    let mut args = env::args();
+    let usage = "USAGE: cargo run input.txt N_KNOTS";
+    let fname = args.nth(1).expect(usage);
+    let n_knots: usize = args
+        .nth(0) // iterator is consumed by previous call
+        .expect(usage)
+        .parse()
+        .expect("N_KNOTS should be a positive integer.");
     let f = File::open(fname).expect("File should exist");
     let reader = BufReader::new(f);
 
-    let mut head = Point::new(0, 0);
-    let mut tail = Point::new(0, 0);
+    let mut rope = Rope::new(n_knots);
     let mut visited = HashSet::<Point>::new();
-    visited.insert(tail);
+    visited.insert(rope.knots[0]);
 
-    // let mut counter = 0;
-    // println!("{:?}\t{:?}", head, tail);
     for line_ in reader.lines() {
-        // if counter == 10 {
-        //     break;
-        // }
         let line = line_.unwrap();
         let direction = &line[..1];
         let n_steps: i32 = line[2..].parse().unwrap();
-        match direction {
-            "R" => {
-                let step = Point::new(1, 0);
-                update_tail(&mut head, &mut tail, &mut visited, n_steps, &step);
-            }
-            "L" => {
-                let step = Point::new(-1, 0);
-                update_tail(&mut head, &mut tail, &mut visited, n_steps, &step);
-            }
-            "U" => {
-                let step = Point::new(0, 1);
-                update_tail(&mut head, &mut tail, &mut visited, n_steps, &step);
-            }
-            "D" => {
-                let step = Point::new(0, -1);
-                update_tail(&mut head, &mut tail, &mut visited, n_steps, &step);
-            }
+        let step = match direction {
+            "R" => Point::new(1, 0),
+            "L" => Point::new(-1, 0),
+            "U" => Point::new(0, 1),
+            "D" => Point::new(0, -1),
             _ => panic!("Unrecognized direction: {direction}"),
-        }
-        // counter += 1;
+        };
+        rope.update_knots(&mut visited, n_steps, step);
     }
-    // println!("Final set with len {}: {:?}", visited.len(), visited);
-    println!("Final set with len {}", visited.len());
+    println!(
+        "Number of places visited by the tail is {}, for a rope with {} knots",
+        visited.len(),
+        rope.n_knots
+    );
 }
