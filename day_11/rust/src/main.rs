@@ -36,11 +36,7 @@ impl Monkey {
             } else {
                 self.op[1].parse().unwrap()
             };
-            let op_result = if self.op[0] == "+" {
-                add(*i, y)
-            } else {
-                mul(*i, y)
-            };
+            let op_result = if self.op[0] == "+" { *i + y } else { *i * y };
             let worry = (op_result as f32 / 3.0) as i32;
 
             if worry % self.test == 0 {
@@ -52,13 +48,6 @@ impl Monkey {
         self.items.clear();
         (true_items, false_items)
     }
-}
-
-fn add(x: i32, y: i32) -> i32 {
-    x + y
-}
-fn mul(x: i32, y: i32) -> i32 {
-    x * y
 }
 
 fn main() {
@@ -101,8 +90,6 @@ fn main() {
         }
     }
 
-    // println!("{:?}", monkeys);
-
     let mut counter = 20;
     while counter > 0 {
         for i in 0..monkeys.len() {
@@ -117,6 +104,5 @@ fn main() {
 
     monkeys.sort_by(|a, b| b.inspected.cmp(&a.inspected));
     let result = monkeys[0].inspected * monkeys[1].inspected;
-    // println!("{:?}", monkeys);
     println!("{result}");
 }
