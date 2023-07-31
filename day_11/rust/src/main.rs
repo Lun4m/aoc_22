@@ -6,15 +6,15 @@ use std::{
 
 #[derive(Debug)]
 struct Monkey {
-    items: Vec<i32>,
+    items: Vec<u64>,
     op: Vec<String>,
-    test: i32,
+    test: u64,
     next: (usize, usize),
-    inspected: i32,
+    inspected: u64,
 }
 
 impl Monkey {
-    fn new(items: Vec<i32>, op: Vec<String>, test: i32, next: (usize, usize)) -> Self {
+    fn new(items: Vec<u64>, op: Vec<String>, test: u64, next: (usize, usize)) -> Self {
         Monkey {
             items,
             op,
@@ -24,9 +24,9 @@ impl Monkey {
         }
     }
 
-    fn throw_items(&mut self) -> (Vec<i32>, Vec<i32>) {
-        let mut true_items: Vec<i32> = vec![];
-        let mut false_items: Vec<i32> = vec![];
+    fn throw_items(&mut self, monkey_mod: u64) -> (Vec<u64>, Vec<u64>) {
+        let mut true_items: Vec<u64> = vec![];
+        let mut false_items: Vec<u64> = vec![];
 
         for i in &self.items {
             self.inspected += 1;
@@ -37,7 +37,11 @@ impl Monkey {
                 self.op[1].parse().unwrap()
             };
             let op_result = if self.op[0] == "+" { *i + y } else { *i * y };
-            let worry = (op_result as f32 / 3.0) as i32;
+            // Part 1
+            // let worry = (op_result as f32 / 3.0) as u64;
+
+            // Part 2
+            let worry = op_result % monkey_mod;
 
             if worry % self.test == 0 {
                 true_items.push(worry);
@@ -57,7 +61,7 @@ fn main() {
     let reader = BufReader::new(file);
 
     let mut monkeys: Vec<Monkey> = vec![];
-    let mut items: Vec<i32> = vec![];
+    let mut items: Vec<u64> = vec![];
     let mut test = 0;
     let mut next = (0, 0);
     let mut operations = vec![String::new(); 2];
@@ -90,10 +94,13 @@ fn main() {
         }
     }
 
-    let mut counter = 20;
+    let monkey_mod = monkeys.iter().map(|monkey| monkey.test).product();
+
+    // let mut counter = 20;  // Part 1
+    let mut counter = 10_000; // Part 2
     while counter > 0 {
         for i in 0..monkeys.len() {
-            let (mut true_items, mut false_items) = monkeys[i].throw_items();
+            let (mut true_items, mut false_items) = monkeys[i].throw_items(monkey_mod);
             let to_true = monkeys[i].next.0;
             let to_false = monkeys[i].next.1;
             monkeys[to_true].items.append(&mut true_items);
@@ -103,6 +110,6 @@ fn main() {
     }
 
     monkeys.sort_by(|a, b| b.inspected.cmp(&a.inspected));
-    let result = monkeys[0].inspected * monkeys[1].inspected;
-    println!("{result}");
+    let monkey_business = monkeys[0].inspected * monkeys[1].inspected;
+    println!("{monkey_business}");
 }
